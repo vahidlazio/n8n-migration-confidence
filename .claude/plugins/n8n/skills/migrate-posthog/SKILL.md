@@ -446,81 +446,31 @@ Position migration as **"migration + spring cleaning"** opportunity.
 
 ## Confidence SDK Integration
 
-**IMPORTANT:** Before implementing SDK integration, consult the Confidence docs MCP for up-to-date integration patterns.
+**IMPORTANT:** Always query the `confidence-docs-mcp` for current SDK integration guidance. Do not hardcode SDK patterns.
 
-### 1. Query Docs MCP for Integration Guide
+### Query Docs MCP
 
-Determine the target platform/framework from the codebase, then query docs:
+Before implementing any SDK integration:
 
 ```
-Confidence Docs MCP: Search for relevant SDK documentation
+confidence-docs-mcp: Query for integration guidance
 
-For Node.js backend:
-  - Search: "Node.js SDK" or "OpenFeature provider"
+Backend (Node.js):
+  - Query: "local resolve" - ALWAYS prefer local resolve for backend
+  - Query: "OpenFeature server provider"
   
-For React frontend:
-  - Search: "React SDK" or "React hooks"
-  
-For Vue frontend:
-  - Search: "JavaScript SDK" (Vue uses the JS SDK directly)
-  
-For REST API (custom implementation):
-  - Search: "REST API" or "Resolve API"
+Frontend:
+  - Query: "React SDK" or "JavaScript SDK"
 ```
 
-### 2. Docs MCP Available Queries
+**Backend MUST use local resolve** - query docs MCP to learn the current recommended approach.
 
-The `confidence-docs-mcp` server provides documentation search. Query it for:
+### Implementation Flow
 
-| Platform | Search Terms |
-|----------|--------------|
-| Node.js (Express, n8n backend) | `node sdk`, `openfeature server provider` |
-| React | `react sdk`, `react provider`, `useFlag` |
-| Vue/Vanilla JS | `javascript sdk`, `browser sdk` |
-| REST API | `resolve api`, `api reference` |
-| Context Schema | `evaluation context`, `targeting` |
-
-### 3. Integration Patterns
-
-After querying docs, implement based on the codebase architecture:
-
-**Server-side resolution** (recommended for SSR/security):
-- Backend resolves flags, passes results to frontend
-- Frontend receives pre-evaluated flag values
-- Suitable for: n8n, Next.js SSR, sensitive flag values
-
-**Client-side resolution** (simpler for SPAs):
-- Frontend SDK evaluates flags directly
-- Requires exposing client secret to browser
-- Suitable for: Pure SPAs, public feature toggles
-
-### 4. Common Integration Steps
-
-1. **Install SDK** - Use package from docs
-2. **Configure client** - Set region, client secret
-3. **Set evaluation context** - targeting_key + attributes
-4. **Resolve flags** - Use SDK's flag resolution method
-5. **Handle caching** - Configure cache TTL appropriately
-
-### n8n Architecture Reference
-
-For n8n specifically, check existing implementation:
-
-1. **Backend**: `packages/cli/src/confidence/index.ts`
-   - Server-side resolution via REST API
-   - Caching with TTL
-   - Context: `instance_id`, `user_id`, `created_at_timestamp`
-
-2. **Frontend**: `packages/frontend/editor-ui/src/app/stores/confidence.store.ts`
-   - Receives pre-evaluated flags from backend
-   - Mirrors PostHog store API for compatibility
-
-3. **Config**: `packages/@n8n/config/src/configs/diagnostics.config.ts`
-   ```bash
-   N8N_CONFIDENCE_ENABLED=true
-   N8N_CONFIDENCE_CLIENT_SECRET=<secret>
-   N8N_CONFIDENCE_API_HOST=https://resolver.confidence.dev
-   ```
+1. **Query docs MCP** for the target platform
+2. **Follow the docs** for package installation and setup
+3. **Use local resolve** for backend (query docs MCP for details)
+4. **Test resolution** using the flags MCP `resolveFlag` tool
 
 ## SDK Transformation Patterns
 
