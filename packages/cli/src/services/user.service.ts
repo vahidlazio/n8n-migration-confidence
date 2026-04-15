@@ -26,6 +26,7 @@ import { BadRequestError } from '@/errors/response-errors/bad-request.error';
 import { InternalServerError } from '@/errors/response-errors/internal-server.error';
 import { EventService } from '@/events/event.service';
 import type { Invitation } from '@/interfaces';
+import { ConfidenceClient } from '@/confidence';
 import { PostHogClient } from '@/posthog';
 import type { UserRequest } from '@/requests';
 import { UrlService } from '@/services/url.service';
@@ -104,6 +105,7 @@ export class UserService {
 		user: User,
 		options?: {
 			posthog?: PostHogClient;
+			confidence?: ConfidenceClient;
 			withScopes?: boolean;
 			mfaAuthenticated?: boolean;
 		},
@@ -120,7 +122,10 @@ export class UserService {
 			isOwner: user.role.slug === 'global:owner',
 		};
 
-		if (options?.posthog) {
+		// Prefer Confidence over PostHog when both are available
+		if (options?.confidence?.isEnabled()) {
+			publicUser = await this.addFeatureFlagsFromConfidence(publicUser, options.confidence);
+		} else if (options?.posthog) {
 			publicUser = await this.addFeatureFlags(publicUser, options.posthog);
 		}
 
@@ -154,6 +159,21 @@ export class UserService {
 
 		const fetchPromise = new Promise<PublicUser>(async (resolve) => {
 			publicUser.featureFlags = await posthog.getFeatureFlags(publicUser);
+			resolve(publicUser);
+		});
+
+		return await Promise.race([fetchPromise, timeoutPromise]);
+	}
+
+	private async addFeatureFlagsFromConfidence(publicUser: PublicUser, confidence: ConfidenceClient) {
+		const timeoutPromise = new Promise<PublicUser>((resolve) => {
+			setTimeout(() => {
+				resolve(publicUser);
+			}, 1500);
+		});
+
+		const fetchPromise = new Promise<PublicUser>(async (resolve) => {
+			publicUser.featureFlags = await confidence.getFeatureFlags(publicUser);
 			resolve(publicUser);
 		});
 

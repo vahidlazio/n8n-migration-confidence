@@ -12,6 +12,7 @@ import { ForbiddenError } from '@/errors/response-errors/forbidden.error';
 import { EventService } from '@/events/event.service';
 import { ExternalHooks } from '@/external-hooks';
 import { License } from '@/license';
+import { ConfidenceClient } from '@/confidence';
 import { PostHogClient } from '@/posthog';
 import { AuthlessRequest } from '@/requests';
 import { PasswordUtility } from '@/services/password.utility';
@@ -33,6 +34,7 @@ export class InvitationController {
 		private readonly postHog: PostHogClient,
 		private readonly eventService: EventService,
 		private readonly ownershipService: OwnershipService,
+		private readonly confidence?: ConfidenceClient,
 	) {}
 
 	/**
@@ -148,6 +150,7 @@ export class InvitationController {
 
 		return await this.userService.toPublic(updatedUser, {
 			posthog: this.postHog,
+			confidence: this.confidence,
 			withScopes: true,
 		});
 	}
