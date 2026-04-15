@@ -216,12 +216,32 @@ For each flag in "CAN MIGRATE AUTOMATICALLY":
 
 5. **Add targeting rules**
 
-   For flags **with** targeting conditions:
+   **IMPORTANT: Allocation Entity vs Targeting Attributes**
+
+   In Confidence, rules have two concepts:
+   - **Allocation Entity** (`targetingKeySelector`): The entity used for bucketing/randomization (e.g., `user_id`, `visitor_id`). This ensures consistent variant assignment.
+   - **Targeting Conditions**: Attribute filters that determine WHO gets the flag (e.g., `plan in ["pro"]`, `country = "US"`).
+
+   The `addTargetingRule` tool's `attribute` parameter sets BOTH the allocation entity AND targeting condition. For attribute-based targeting (plan, country, etc.), you need a **two-step approach**:
+
+   **Step 1: Create base rule with entity allocation**
    ```
    Konfidens MCP: addTargetingRule
+     attribute: "<chosen_entity>"  # user_id or visitor_id
+     operator: "not_in"
+     value: "[]"
+     variantName: "enabled"
+     rolloutPercentage: "100"
    ```
 
-   For flags **without** targeting (100% rollout to everyone):
+   **Step 2: Add attribute targeting conditions**
+   After creating the base rule, use the Confidence UI or API to add attribute conditions to filter which users within that allocation receive the flag.
+
+   **LIMITATION:** The current `addTargetingRule` MCP tool sets `attribute` as the `targetingKeySelector`. For proper entity-based allocation with attribute targeting:
+   - For simple 100% rollouts to everyone: Use entity (user_id) with `not_in []`
+   - For attribute filtering (plan, country): The UI must be used to add conditions to an existing entity-based rule, OR accept that allocation will be on the attribute
+
+   **For flags WITHOUT targeting (100% rollout to everyone):**
    ```
    Konfidens MCP: addTargetingRule
      attribute: "<chosen_entity>"  # user_id or visitor_id (from user's choice)
@@ -255,6 +275,7 @@ For each flag in "CAN MIGRATE AUTOMATICALLY":
      variantName: "enabled"
      rolloutPercentage: "100"
    ```
+   Note: This creates a rule allocated on `country` - use the UI to change allocation to `user_id` if needed.
 
 6. **Verify resolution**
    ```
