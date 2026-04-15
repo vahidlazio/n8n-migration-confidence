@@ -446,132 +446,80 @@ Position migration as **"migration + spring cleaning"** opportunity.
 
 ## Confidence SDK Integration
 
-### Node.js Backend (OpenFeature)
+**IMPORTANT:** Before implementing SDK integration, consult the Confidence docs MCP for up-to-date integration patterns.
 
-```bash
-npm install @openfeature/server-sdk @spotify-confidence/openfeature-server-provider
+### 1. Query Docs MCP for Integration Guide
+
+Determine the target platform/framework from the codebase, then query docs:
+
 ```
+Confidence Docs MCP: Search for relevant SDK documentation
 
-```typescript
-import { OpenFeature } from '@openfeature/server-sdk';
-import { ConfidenceServerProvider } from '@spotify-confidence/openfeature-server-provider';
-
-// Initialize provider
-const provider = new ConfidenceServerProvider({
-  clientSecret: process.env.CONFIDENCE_CLIENT_SECRET,
-  region: 'eu', // or 'us'
-});
-
-OpenFeature.setProvider(provider);
-const client = OpenFeature.getClient();
-
-// Resolve flag
-const value = await client.getBooleanValue('my-flag', false, {
-  targetingKey: userId,
-  user_id: userId,
-  plan: 'premium',
-});
-```
-
-### Standalone SDK (Legacy)
-
-```bash
-npm install @spotify-confidence/sdk
-```
-
-```typescript
-import { Confidence } from '@spotify-confidence/sdk';
-
-const confidence = Confidence.create({
-  clientSecret: process.env.CONFIDENCE_CLIENT_SECRET,
-  region: 'eu',
-  environment: 'production',
-});
-
-// Set context
-const ctx = confidence.withContext({
-  targeting_key: userId,
-  user_id: userId,
-  plan: 'premium',
-});
-
-// Resolve flag (returns value)
-const enabled = await ctx.getFlag('my-flag', false);
-
-// Resolve flag (returns evaluation details)
-const evaluation = await ctx.evaluateFlag('my-flag', false);
-console.log(evaluation.variant, evaluation.reason);
-```
-
-### React Frontend
-
-```bash
-npm install @spotify-confidence/react
-```
-
-```tsx
-import { ConfidenceProvider, useFlag } from '@spotify-confidence/react';
-
-// Provider setup
-<ConfidenceProvider
-  clientSecret={CONFIDENCE_CLIENT_SECRET}
-  context={{ user_id: userId, plan: 'premium' }}
->
-  <App />
-</ConfidenceProvider>
-
-// Hook usage
-function MyComponent() {
-  const { value, isLoading } = useFlag('my-flag', false);
+For Node.js backend:
+  - Search: "Node.js SDK" or "OpenFeature provider"
   
-  if (isLoading) return <Spinner />;
-  return value ? <NewFeature /> : <OldFeature />;
-}
+For React frontend:
+  - Search: "React SDK" or "React hooks"
+  
+For Vue frontend:
+  - Search: "JavaScript SDK" (Vue uses the JS SDK directly)
+  
+For REST API (custom implementation):
+  - Search: "REST API" or "Resolve API"
 ```
 
-### Vue Frontend (Custom Implementation)
+### 2. Docs MCP Available Queries
 
-```typescript
-// stores/confidence.store.ts
-import { defineStore } from 'pinia';
-import { Confidence } from '@spotify-confidence/sdk';
+The `confidence-docs-mcp` server provides documentation search. Query it for:
 
-export const useConfidence = defineStore('confidence', () => {
-  const confidence = Confidence.create({
-    clientSecret: import.meta.env.VITE_CONFIDENCE_CLIENT_SECRET,
-  });
-  
-  const getVariant = async (flag: string, defaultValue: any) => {
-    return await confidence.getFlag(flag, defaultValue);
-  };
-  
-  const isFeatureEnabled = async (flag: string) => {
-    return await confidence.getFlag(flag, false);
-  };
-  
-  return { getVariant, isFeatureEnabled };
-});
-```
+| Platform | Search Terms |
+|----------|--------------|
+| Node.js (Express, n8n backend) | `node sdk`, `openfeature server provider` |
+| React | `react sdk`, `react provider`, `useFlag` |
+| Vue/Vanilla JS | `javascript sdk`, `browser sdk` |
+| REST API | `resolve api`, `api reference` |
+| Context Schema | `evaluation context`, `targeting` |
 
-## n8n-Specific Integration
+### 3. Integration Patterns
 
-For n8n, the integration uses server-side flag resolution:
+After querying docs, implement based on the codebase architecture:
 
-1. **Backend** (`packages/cli/src/confidence/index.ts`): 
-   - `ConfidenceClient` service resolves flags via REST API
-   - Flags cached for 10 minutes per user
-   - Context includes `instance_id`, `user_id`, `created_at_timestamp`
+**Server-side resolution** (recommended for SSR/security):
+- Backend resolves flags, passes results to frontend
+- Frontend receives pre-evaluated flag values
+- Suitable for: n8n, Next.js SSR, sensitive flag values
 
-2. **Frontend** (`packages/frontend/editor-ui/src/app/stores/confidence.store.ts`):
-   - Flags are evaluated server-side and passed to frontend via user session
-   - `useConfidence` store mirrors `usePostHog` API for compatibility
-   - `useFeatureFlags` abstraction allows switching providers via config
+**Client-side resolution** (simpler for SPAs):
+- Frontend SDK evaluates flags directly
+- Requires exposing client secret to browser
+- Suitable for: Pure SPAs, public feature toggles
 
-3. **Configuration**:
+### 4. Common Integration Steps
+
+1. **Install SDK** - Use package from docs
+2. **Configure client** - Set region, client secret
+3. **Set evaluation context** - targeting_key + attributes
+4. **Resolve flags** - Use SDK's flag resolution method
+5. **Handle caching** - Configure cache TTL appropriately
+
+### n8n Architecture Reference
+
+For n8n specifically, check existing implementation:
+
+1. **Backend**: `packages/cli/src/confidence/index.ts`
+   - Server-side resolution via REST API
+   - Caching with TTL
+   - Context: `instance_id`, `user_id`, `created_at_timestamp`
+
+2. **Frontend**: `packages/frontend/editor-ui/src/app/stores/confidence.store.ts`
+   - Receives pre-evaluated flags from backend
+   - Mirrors PostHog store API for compatibility
+
+3. **Config**: `packages/@n8n/config/src/configs/diagnostics.config.ts`
    ```bash
    N8N_CONFIDENCE_ENABLED=true
-   N8N_CONFIDENCE_CLIENT_SECRET=<secret-from-confidence-console>
-   N8N_CONFIDENCE_API_HOST=https://resolver.confidence.dev  # default
+   N8N_CONFIDENCE_CLIENT_SECRET=<secret>
+   N8N_CONFIDENCE_API_HOST=https://resolver.confidence.dev
    ```
 
 ## SDK Transformation Patterns
