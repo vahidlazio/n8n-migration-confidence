@@ -13,13 +13,13 @@ class PostHogConfig {
 
 @Config
 class ConfidenceConfig {
-	/** Confidence client secret for feature flag evaluation. */
+	/**
+	 * Confidence client secret for feature flag evaluation.
+	 * This should be a Backend type client secret from your Confidence dashboard.
+	 * Never expose this secret outside your organization.
+	 */
 	@Env('N8N_CONFIDENCE_CLIENT_SECRET')
 	clientSecret: string = '';
-
-	/** Confidence API host URL. */
-	@Env('N8N_CONFIDENCE_API_HOST')
-	apiHost: string = 'https://resolver.confidence.dev';
 
 	/** Whether to use Confidence instead of PostHog for feature flags. */
 	@Env('N8N_CONFIDENCE_ENABLED')
