@@ -12,6 +12,21 @@ class PostHogConfig {
 }
 
 @Config
+class ConfidenceConfig {
+	/**
+	 * Confidence client secret for feature flag evaluation.
+	 * This should be a Backend type client secret from your Confidence dashboard.
+	 * Never expose this secret outside your organization.
+	 */
+	@Env('N8N_CONFIDENCE_CLIENT_SECRET')
+	clientSecret: string = '';
+
+	/** Whether to use Confidence instead of PostHog for feature flags. */
+	@Env('N8N_CONFIDENCE_ENABLED')
+	enabled: boolean = false;
+}
+
+@Config
 export class DiagnosticsConfig {
 	/** Whether anonymous diagnostics and telemetry are enabled for this instance. */
 	@Env('N8N_DIAGNOSTICS_ENABLED')
@@ -27,4 +42,7 @@ export class DiagnosticsConfig {
 
 	@Nested
 	posthogConfig: PostHogConfig;
+
+	@Nested
+	confidenceConfig: ConfidenceConfig;
 }

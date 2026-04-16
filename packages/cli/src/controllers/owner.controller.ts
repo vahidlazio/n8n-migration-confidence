@@ -4,6 +4,7 @@ import { Body, GlobalScope, Post, RestController } from '@n8n/decorators';
 import { Response } from 'express';
 
 import { AuthService } from '@/auth/auth.service';
+import { ConfidenceClient } from '@/confidence';
 import { PostHogClient } from '@/posthog';
 import { BannerService } from '@/services/banner.service';
 import { UserService } from '@/services/user.service';
@@ -17,6 +18,7 @@ export class OwnerController {
 		private readonly userService: UserService,
 		private readonly postHog: PostHogClient,
 		private readonly ownershipService: OwnershipService,
+		private readonly confidence?: ConfidenceClient,
 	) {}
 
 	/**
@@ -26,7 +28,7 @@ export class OwnerController {
 	async setupOwner(req: AuthenticatedRequest, res: Response, @Body payload: OwnerSetupRequestDto) {
 		const owner = await this.ownershipService.setupOwner(payload);
 		this.authService.issueCookie(res, owner, req.authInfo?.usedMfa ?? false, req.browserId);
-		return await this.userService.toPublic(owner, { posthog: this.postHog, withScopes: true });
+		return await this.userService.toPublic(owner, { posthog: this.postHog, confidence: this.confidence, withScopes: true });
 	}
 
 	@Post('/dismiss-banner')

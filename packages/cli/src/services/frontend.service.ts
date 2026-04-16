@@ -241,6 +241,9 @@ export class FrontendService {
 				proxy: `${instanceBaseUrl}/${restEndpoint}/ph`,
 				debug: this.globalConfig.logging.level === 'debug',
 			},
+			confidence: {
+				enabled: this.globalConfig.diagnostics.confidenceConfig.enabled,
+			},
 			personalizationSurveyEnabled:
 				this.globalConfig.personalization.enabled && this.globalConfig.diagnostics.enabled,
 			defaultLocale: this.globalConfig.defaultLocale,

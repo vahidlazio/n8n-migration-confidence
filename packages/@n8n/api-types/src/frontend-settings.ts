@@ -124,6 +124,9 @@ export interface FrontendSettings {
 		debug: boolean;
 		proxy: string;
 	};
+	confidence: {
+		enabled: boolean;
+	};
 	dataTables: {
 		maxSize: number;
 	};

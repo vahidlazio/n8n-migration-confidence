@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "confidence-flags-mcp": {
+      "type": "http",
+      "url": "https://mcp.confidence.dev/mcp/flags"
+    },
+    "confidence-docs-mcp": {
+      "type": "http",
+      "url": "https://mcp.confidence.dev/mcp/docs"
+    },
+    "posthog": {
+      "type": "http",
+      "url": "https://mcp.posthog.com/mcp"
+    }
+  }
+}

@@ -24,6 +24,7 @@ import { InternalServerError } from '@/errors/response-errors/internal-server.er
 import { EventService } from '@/events/event.service';
 import { License } from '@/license';
 import { MfaService } from '@/mfa/mfa.service';
+import { ConfidenceClient } from '@/confidence';
 import { PostHogClient } from '@/posthog';
 import { AuthlessRequest } from '@/requests';
 import { UserService } from '@/services/user.service';
@@ -47,6 +48,7 @@ export class AuthController {
 		private readonly eventService: EventService,
 		private readonly authHandlerRegistry: AuthHandlerRegistry,
 		private readonly postHog?: PostHogClient,
+		private readonly confidence?: ConfidenceClient,
 	) {}
 
 	/** Log in a user */
@@ -101,6 +103,7 @@ export class AuthController {
 
 		return await this.userService.toPublic(user, {
 			posthog: this.postHog,
+			confidence: this.confidence,
 			withScopes: true,
 			mfaAuthenticated: user.mfaEnabled,
 		});
@@ -190,6 +193,7 @@ export class AuthController {
 
 		return await this.userService.toPublic(user, {
 			posthog: this.postHog,
+			confidence: this.confidence,
 			withScopes: true,
 			mfaAuthenticated: req.authInfo?.usedMfa,
 		});

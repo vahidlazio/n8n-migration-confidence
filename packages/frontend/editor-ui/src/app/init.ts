@@ -17,6 +17,7 @@ import { useCloudPlanStore } from '@/app/stores/cloudPlan.store';
 import { useNodeTypesStore } from '@/app/stores/nodeTypes.store';
 import { useNpsSurveyStore } from '@/app/stores/npsSurvey.store';
 import { usePostHog } from '@/app/stores/posthog.store';
+import { useConfidence } from '@/app/stores/confidence.store';
 import { useProjectsStore } from '@/features/collaboration/projects/projects.store';
 import { useRBACStore } from '@/app/stores/rbac.store';
 import { useSettingsStore } from '@/app/stores/settings.store';
@@ -232,6 +233,7 @@ function registerAuthenticationHooks() {
 	const usersStore = useUsersStore();
 	const cloudPlanStore = useCloudPlanStore();
 	const postHogStore = usePostHog();
+	const confidenceStore = useConfidence();
 	const bannersStore = useBannersStore();
 	const npsSurveyStore = useNpsSurveyStore();
 	const telemetry = useTelemetry();
@@ -249,7 +251,9 @@ function registerAuthenticationHooks() {
 			userId: user.id,
 			userRole: user.role,
 		});
+		// Initialize both PostHog and Confidence - the active one depends on settings
 		postHogStore.init(user.featureFlags);
+		confidenceStore.init(user.featureFlags);
 		npsSurveyStore.setupNpsSurveyOnLogin(user.id, user.settings);
 		void settingsStore.getModuleSettings();
 		void bannersStore.loadDynamicBanners();
@@ -259,6 +263,7 @@ function registerAuthenticationHooks() {
 		bannersStore.clearBannerStack();
 		npsSurveyStore.resetNpsSurveyOnLogOut();
 		postHogStore.reset();
+		confidenceStore.reset();
 		cloudPlanStore.reset();
 		telemetry.reset();
 		RBACStore.setGlobalScopes([]);
